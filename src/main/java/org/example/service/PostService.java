@@ -1,0 +1,88 @@
+package org.example.service;
+
+import lombok.RequiredArgsConstructor;
+import org.example.common.exception.PostNotFoundException;
+import org.example.common.utils.PagingUtil;
+import org.example.domain.Post;
+import org.example.dto.common.RequestListDto;
+import org.example.dto.common.ResponseSavedIdDto;
+import org.example.dto.post.RequestRegisterPostDto;
+import org.example.dto.post.RequestUpdatePostDto;
+import org.example.dto.post.ResponsePostDto;
+import org.example.dto.post.ResponsePostListDto;
+import org.example.repository.PostRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Component
+public class PostService {
+
+    private final PostRepository postRepository;
+
+    public ResponseSavedIdDto write(RequestRegisterPostDto requestDto) {
+        Post post = Post.builder()
+                .title(requestDto.getTitle())
+                .content(requestDto.getContent())
+                .createdDate(LocalDateTime.now())
+                .build();
+
+        Post savedPost = postRepository.save(post);
+
+        return ResponseSavedIdDto.builder()
+                .savedId(savedPost.getPostId())
+                .build();
+    }
+
+    public ResponsePostDto get(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException());
+
+        return ResponsePostDto.builder()
+                .postId(post.getPostId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .createdDate(post.getCreatedDate())
+                .build();
+    }
+
+    public ResponsePostListDto getList(RequestListDto requestDto) {
+        PageRequest pageRequest = PageRequest.of(requestDto.getPage(), requestDto.getPageSize(), Sort.Direction.DESC, "postId");
+        Page<Post> postList = postRepository.findAll(pageRequest);
+
+        ResponsePostListDto responsePostListDto = ResponsePostListDto.builder()
+                .pagingUtil(new PagingUtil(postList.getTotalElements(), postList.getTotalPages(), postList.getNumber(), postList.getSize()))
+                .postList(postList.stream().map(post -> ResponsePostDto.builder()
+                        .postId(post.getPostId())
+                        .title(post.getTitle())
+                        .content(post.getContent())
+                        .createdDate(post.getCreatedDate())
+                        .build()).collect(Collectors.toList()))
+                .build();
+
+        return responsePostListDto;
+    }
+
+    @Transactional
+    public void edit(Long postId, RequestUpdatePostDto requestDto) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException());
+
+        post.update(requestDto);
+    }
+
+    public void delete(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException());
+
+        postRepository.delete(post);
+    }
+}

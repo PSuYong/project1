@@ -1,0 +1,33 @@
+server:
+  port: 8081
+spring:
+  profiles:
+    active: default
+  main:
+    web-application-type: none
+  config:
+    location: current/config
+  pid:
+    file: application.pid
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:tcp://localhost/~/test  # H2 인메모리 데이터베이스 URL
+    username: sa            # H2 기본 사용자 이름
+    password:               # H2 기본 비밀번호 (비워 두세요)
+  h2:
+    console:
+      enabled: true         # H2 콘솔을 활성화합니다. (개발 환경에서만 사용)
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect # H2 데이터베이스용 Hibernate 방언으로 변경합니다.
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  logging:
+    level:
+      org.springframework: DEBUG
